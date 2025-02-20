@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lock or Switch</title>
+    <link rel="stylesheet" href="lock_or_switch.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome</h1>
+        <p>What do you want to do?</p>
+        <button id="lockDevice" class="btn lock">Lock Device</button>
+        <button id="switchUser" class="btn switch">Switch User</button>
+    </div>
+
+    <script>
+        document.getElementById("lockDevice").addEventListener("click", () => {
+            fetch('http://localhost:3000/lockDevice', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem("token")}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(err => console.error(err));
+        });
+
+        document.getElementById("switchUser").addEventListener("click", () => {
+            localStorage.removeItem("token");
+            window.location.href = "login.html";
+        });
+    </script>
+</body>
+</html>
