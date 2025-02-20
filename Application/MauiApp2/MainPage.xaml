@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiApp2.MainPage"
+             BackgroundColor="#2E3A45">
+    <ScrollView>
+        <Grid Padding="20" RowSpacing="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Title -->
+            <Label Text="Device Locker"
+                   FontSize="32"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   HorizontalOptions="Center"
+                   Margin="0,40,0,10"
+                   Grid.Row="0" />
+
+            <!-- Main Content -->
+            <VerticalStackLayout
+                Spacing="20"
+                VerticalOptions="CenterAndExpand"
+                HorizontalOptions="Fill"
+                Grid.Row="1">
+
+                <!-- Input Field for IP Address -->
+                <Frame
+                    CornerRadius="15"
+                    Padding="0"
+                    BackgroundColor="#1C252B"
+                    HorizontalOptions="FillAndExpand"
+                    HeightRequest="50">
+                    <Entry
+                        x:Name="EntryIpAddress"
+                        Placeholder="Enter IP Address"
+                        PlaceholderColor="#A9A9A9"
+                        TextColor="White"
+                        FontSize="16"
+                        BackgroundColor="Transparent"
+                        VerticalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Margin="10,0" />
+                </Frame>
+
+                <!-- Input Field for Username 
+                
+                
+                <Frame
+                    CornerRadius="15"
+                    Padding="0"
+                    BackgroundColor="#1C252B"
+                    HorizontalOptions="FillAndExpand"
+                    HeightRequest="50">
+                    <Entry
+                        x:Name="EntryUsername"
+                        Placeholder="Enter Username"
+                        PlaceholderColor="#A9A9A9"
+                        TextColor="White"
+                        FontSize="16"
+                        BackgroundColor="Transparent"
+                        VerticalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Margin="10,0" />
+                </Frame>
+                
+                -->
+
+                <!-- Input Field for Email -->
+                <Frame
+                    CornerRadius="15"
+                    Padding="0"
+                    BackgroundColor="#1C252B"
+                    HorizontalOptions="FillAndExpand"
+                    HeightRequest="50">
+                    <Entry
+                        x:Name="EntryEmail"
+                        Placeholder="Enter Email"
+                        PlaceholderColor="#A9A9A9"
+                        TextColor="White"
+                        FontSize="16"
+                        BackgroundColor="Transparent"
+                        VerticalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Margin="10,0" />
+                </Frame>
+
+                <!-- Input Field for Password -->
+                <Frame
+                    CornerRadius="15"
+                    Padding="0"
+                    BackgroundColor="#1C252B"
+                    HorizontalOptions="FillAndExpand"
+                    HeightRequest="50">
+                    <Entry
+                        x:Name="EntryPassword"
+                        Placeholder="Enter Password"
+                        PlaceholderColor="#A9A9A9"
+                        TextColor="White"
+                        FontSize="16"
+                        BackgroundColor="Transparent"
+                        VerticalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Margin="10,0"
+                        IsPassword="True" />
+                </Frame>
+
+                <!-- Register Button 
+                
+                <Button
+                    Text="Register"
+                    BackgroundColor="#4CAF50"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="25"
+                    HorizontalOptions="FillAndExpand"
+                    HeightRequest="50"
+                    Margin="0,10,0,0"
+                    FontSize="18"
+                    Clicked="OnRegisterClicked" />
+                -->
+
+                <!-- Login Button -->
+                <Button
+                    Text="Login"
+                    BackgroundColor="#4CAF50"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="25"
+                    HorizontalOptions="FillAndExpand"
+                    HeightRequest="50"
+                    Margin="0,10,0,0"
+                    FontSize="18"
+                    Clicked="OnLoginClicked" />
+            </VerticalStackLayout>
+
+            <!-- Status Label for Connection and Lock Status -->
+            <Label x:Name="StatusLabel"
+                   Text="Status will appear here"
+                   FontSize="16"
+                   TextColor="White"
+                   HorizontalOptions="Center"
+                   Grid.Row="2"
+                   Margin="0,20,0,10" />
+
+            <!-- Footer Note -->
+            <Label Text="Ensure the IP address is correct before locking the device."
+                   FontSize="12"
+                   TextColor="#A9A9A9"
+                   HorizontalOptions="Center"
+                   VerticalOptions="End"
+                   Grid.Row="3"
+                   Margin="0,20,0,10"
+                   LineBreakMode="WordWrap"
+                   HorizontalTextAlignment="Center" />
+        </Grid>
+    </ScrollView>
+</ContentPage>
