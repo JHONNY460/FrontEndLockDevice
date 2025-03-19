@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const app = express();
 app.use(express.json());
@@ -58,14 +59,18 @@ app.post('/signup', async (req, res) => {
     const { username, email, password } = req.body;
 
     try {
-        // Check if the email already exists
+        // בדיקה אם המשתמש כבר קיים
         const [existingUser] = await db.query(`SELECT * FROM users WHERE email = ?`, [email]);
         if (existingUser.length > 0) {
             return res.status(400).json({ message: "Email already registered" });
         }
 
-        // Insert the new user
-        await db.query(`INSERT INTO users (username, email, password) VALUES (?, ?, ?)`, [username, email, password]);
+        // הצפנת הסיסמה
+        const saltRounds = 10; // מספר הסבבים להצפנה
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // הוספת המשתמש למסד הנתונים
+        await db.query(`INSERT INTO users (username, email, password) VALUES (?, ?, ?)`, [username, email, hashedPassword]);
 
         res.json({ message: "User registered successfully" });
     } catch (error) {
@@ -74,23 +79,30 @@ app.post('/signup', async (req, res) => {
     }
 });
 
-
-
 app.post('/signin', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password , isApp = 0 } = req.body; // ששמים = בתוך ערכים שצריך לקבל זה אומר ערך דיפולטי- אם לא קיבלת
+    console.log(req.body);
     try {
-        // Check if user exists
-        const [rows] = await db.query(`SELECT * FROM users WHERE email = ? AND password = ?`, [email, password]);
+        // בדיקה אם המשתמש קיים
+        const [rows] = await db.query(`SELECT * FROM users WHERE email = ?`, [email]);
 
         if (rows.length > 0) {
             const user = rows[0];
+
+            // השוואת הסיסמה המוצפנת
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                return res.status(401).json({ message: "Invalid credentials" });
+            }
+
+            // יצירת טוקן
             const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: '1h' });
 
-            // Delete old tokens for this user
-            await db.query(`DELETE FROM tokens WHERE user_id = ?`, [user.id]);
-
-            // Insert the new token
-            await db.query(`INSERT INTO tokens (user_id, token) VALUES (?, ?)`, [user.id, token]);
+            // מחיקת טוקנים ישנים והכנסת הטוקן החדש
+            if(isApp == 0){
+                await db.query(`DELETE FROM tokens WHERE user_id = ?`, [user.id]);
+                await db.query(`INSERT INTO tokens (user_id, token) VALUES (?, ?)`, [user.id, token]);
+            }
 
             res.json({ message: "Login successful", token });
         } else {
@@ -101,8 +113,6 @@ app.post('/signin', async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
-
-
 
 
 app.post('/lockDevice', authenticateToken, async (req, res) => {

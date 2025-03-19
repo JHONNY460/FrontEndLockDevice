@@ -1,4 +1,5 @@
 ﻿
+#if ANDROID
 using Android.App;
 using Android.Content;
 using MauiApp2.Services;
@@ -7,7 +8,7 @@ using Microsoft.Maui.Controls.PlatformConfiguration;
 [assembly: Dependency(typeof(DeviceLockService))]
 namespace MauiApp2.Services
 {
-    public class DeviceLockService : IDeviceLockService
+    public class DeviceLockService : IDeviceLockService  //our class that incharge of set the lock screen - validating there is a lock screen on device.
     {
         public DeviceLockService()
         {
@@ -46,3 +47,4 @@ namespace MauiApp2.Services
 }
     }
 }
+#endif

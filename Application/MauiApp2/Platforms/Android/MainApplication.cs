@@ -12,12 +12,12 @@ namespace MauiApp2
         {
         }
 
-        protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+        protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp(); // here we tell the app - if its android- run CreateMauiApp - our main function
 
-        public void StartClient()
-        {
-            Client client = new Client("192.168.1.1", 5000); // Example IP & Port
-           // _ = client.ConnectAsync();
-        }
+        //public void StartClient()
+        //{
+        //   // Client client = new Client("192.168.1.1", 5000); // Example IP & Port
+        //   //// _ = client.ConnectAsync();
+        //}
     }
 }

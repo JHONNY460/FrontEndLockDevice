@@ -8,6 +8,11 @@ using MauiApp2.Classes;
 using MauiApp2.Services;
 #endif
 using Microsoft.Maui.Controls;
+using Org.BouncyCastle.Crypto.Encodings; //BouncyCastle is used for the encryption
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.OpenSsl;
 
 namespace MauiApp2
 {
@@ -18,7 +23,7 @@ namespace MauiApp2
         private int serverPort = 5000;
 
 #if ANDROID
-        //private readonly IDeviceLockService _deviceLockService;
+
 #endif
 
         public MainPage()
@@ -27,40 +32,12 @@ namespace MauiApp2
             clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 #if ANDROID
-            // Resolve the IDeviceLockService using dependency injection
-            //_deviceLockService = DependencyService.Get<IDeviceLockService>();
-            //Console.WriteLine(_deviceLockService);
             
 #endif
         }
 
-        private async void OnRegisterClicked(object sender, EventArgs e)
-        {
-            string ipAddress = EntryIpAddress.Text;
-            string email = EntryEmail.Text;
-            string password = EntryPassword.Text;
-
-            if (IsValidIpAddress(ipAddress) && !string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(password))
-            {
-                serverIp = ipAddress;
-                bool isConnected = await ConnectToServerAsync(GetStatusLabel(), email, password, "REGISTER");
-
-                if (isConnected)
-                {
-                    await DisplayAlert("Success", "Registration successful!", "OK");
-                }
-                else
-                {
-                    await DisplayAlert("Error", "Failed to register.", "OK");
-                }
-            }
-            else
-            {
-                await DisplayAlert("Error", "Please enter valid details.", "OK");
-            }
-        }
-
-        private async void OnLoginClicked(object sender, EventArgs e)
+#if ANDROID
+        private async void OnLoginClicked(object sender, EventArgs e) // the function of the login button
         {
             string ipAddress = EntryIpAddress.Text;
             string email = EntryEmail.Text;
@@ -89,41 +66,63 @@ namespace MauiApp2
             }
         }
 
-        private async Task ListenForServerMessages()
+
+private AsymmetricCipherKeyPair clientKeyPair;
+
+        private async Task ListenForServerMessages() // The main function- listening to server's messages
         {
             try
             {
-                byte[] buffer = new byte[1024];
+                // List all files in the Assets folder (for debugging)
+                string[] assetFiles = Android.App.Application.Context.Assets.List("");
+                Console.WriteLine("[CLIENT] Files in Assets folder:");
+                foreach (var file in assetFiles)
+                {
+                    Console.WriteLine(file);
+                }
 
+                // Load the private key from the Assets folder
+                AsymmetricKeyParameter privateKey = await LoadPrivateKeyFromAssets("private_key.pem");
+
+                // Create the RSA decryption engine
+                var cipher = new Pkcs1Encoding(new RsaEngine());
+                cipher.Init(false, privateKey); // false for decryption
+
+                byte[] buffer = new byte[4096];
                 while (clientSocket != null && clientSocket.Connected)
                 {
                     int received = await clientSocket.ReceiveAsync(new ArraySegment<byte>(buffer), SocketFlags.None);
-
                     if (received > 0)
                     {
-                        string message = Encoding.UTF8.GetString(buffer, 0, received);
-                        Console.WriteLine($"[CLIENT] Received: {message}");
-
-                        MainThread.BeginInvokeOnMainThread(() =>
+                        try
                         {
-                            GetStatusLabel().Text += $"\nServer: {message}";
-                        });
+                            // Extract the encrypted data
+                            byte[] encryptedData = new byte[received];
+                            Array.Copy(buffer, encryptedData, received);
 
-                        if (message == "Your account has been locked.")
-                        {
-                            Console.WriteLine("[CLIENT] LOCK command received! Locking device...");
+                            // Decrypt the data
+                            byte[] decryptedData = cipher.ProcessBlock(encryptedData, 0, encryptedData.Length);
+                            string message = Encoding.UTF8.GetString(decryptedData);
 
-                            MainThread.BeginInvokeOnMainThread(() =>
+                            Console.WriteLine($"[CLIENT] Decrypted: {message}");
+
+                            if (message == "Your account has been locked.")
                             {
-                                GetStatusLabel().Text += "\nYour device has been locked!";
+                                // Handle lock message
+                                MainThread.BeginInvokeOnMainThread(() =>
+                                {
+                                    GetStatusLabel().Text += "\nYour device has been locked!";
 #if ANDROID
-                                var deviceLockService = MauiProgram.Services.GetService<IDeviceLockService>(); 
-                                Console.WriteLine(deviceLockService);
-                                deviceLockService?.LockScreen();
+                                    var deviceLockService = MauiProgram.Services.GetService<IDeviceLockService>();
+                                    Console.WriteLine(deviceLockService);
+                                    deviceLockService?.LockScreen();
 #endif
-                            });
-
-                            // Optional: Disable UI or take other actions
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[CLIENT] Decryption error: {ex.Message}");
                         }
                     }
                 }
@@ -131,14 +130,50 @@ namespace MauiApp2
             catch (SocketException ex)
             {
                 Console.WriteLine($"[CLIENT] Connection lost: {ex.Message}");
-
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    GetStatusLabel().Text += $"\nConnection lost: {ex.Message}";
-                });
             }
         }
+#endif
+#if ANDROID
+        private async Task<AsymmetricKeyParameter> LoadPrivateKeyFromAssets(string fileName)  // Function to load the pem file - encryption 
+        {
+            try
+            {
+                // Read the PEM file from the Assets folder
+                using (var stream = Android.App.Application.Context.Assets.Open(fileName))
+                using (var reader = new StreamReader(stream))
+                {
+                    string pemContent = await reader.ReadToEndAsync();
 
+                    // Parse the PEM content to extract the private key
+                    using (var stringReader = new StringReader(pemContent))
+                    {
+                        PemReader pemReader = new PemReader(stringReader);
+                        object keyObject = pemReader.ReadObject();
+
+                        if (keyObject is AsymmetricCipherKeyPair keyPair)
+                        {
+                            // Return the private key
+                            return keyPair.Private;
+                        }
+                        else if (keyObject is AsymmetricKeyParameter keyParam && keyParam.IsPrivate)
+                        {
+                            // Return the private key
+                            return keyParam;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("The PEM file does not contain a valid private key.");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLIENT] Error loading private key: {ex.Message}");
+                throw;
+            }
+        }
+#endif
         private bool IsValidIpAddress(string ipAddress)
         {
             return IPAddress.TryParse(ipAddress, out _);
@@ -149,7 +184,7 @@ namespace MauiApp2
             return StatusLabel;
         }
 
-        private async Task<bool> ConnectToServerAsync(Label statusLabel, string email, string password, string action)
+        private async Task<bool> ConnectToServerAsync(Label statusLabel, string email, string password, string action) // connecting the server 
         {
             try
             {

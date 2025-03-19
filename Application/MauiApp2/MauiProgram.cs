@@ -9,9 +9,9 @@ using MauiApp2.Services;
 #endif
 namespace MauiApp2
 {
-    public static class MauiProgram
-    { //
-        public static IServiceProvider Services { get; private set; }
+    public static class MauiProgram // our heart of the program - the main class
+    { 
+        public static IServiceProvider Services { get; private set; } // Services manager - used to access microservices like lock screen
         public static MauiApp CreateMauiApp()
         {
             try
@@ -25,11 +25,11 @@ namespace MauiApp2
                         fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                     });
 
-#if DEBUG
-                builder.Logging.AddDebug();
-#endif
+//#if DEBUG
+//                builder.Logging.AddDebug();
+//#endif
 #if ANDROID
-                builder.Services.AddSingleton<IDeviceLockService, DeviceLockService>();
+                builder.Services.AddSingleton<IDeviceLockService, DeviceLockService>(); //our device lock microservice
 #endif
                 
                 var app = builder.Build();
