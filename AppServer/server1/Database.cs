@@ -31,7 +31,8 @@ class Database
             var requestBody = new
             {
                 email = username, // Use the username parameter
-                password = password  // Use the password parameter
+                password = password,  // Use the password parameter
+                isApp = 1
             };
 
             // Serialize the request body to JSON
